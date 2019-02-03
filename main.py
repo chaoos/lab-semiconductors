@@ -126,22 +126,6 @@ R_Sh = V_4h/Ih
 
 # T-R plot
 
-plt.figure(0)
-plt.errorbar(hp.nominal(Tc), hp.nominal(R_Sc/1000), xerr=hp.stddev(Tc), yerr=hp.stddev(R_Sc/1000), fmt='.', label=r'measured data cooling')
-plt.errorbar(hp.nominal(Th), hp.nominal(R_Sh/1000), xerr=hp.stddev(Th), yerr=hp.stddev(R_Sh/1000), fmt='.', label=r'measured data heating')
-
-plt.ylabel(r"$R \, [k\Omega]$")
-plt.xlabel(r"$T \, [^{\circ}K]$")
-#plt.xlim(580, 760) # intrinsic regime
-#plt.ylim(0, 0.015) # intrinsic regime
-plt.grid(True)
-plt.legend(loc="best")
-plt.savefig("plots/temperature_resistance.eps")
-
-# energy gap plot
-
-# cooling
-
 Xc = 1/(2*kB*Tc) * eV # unitless
 Xh = 1/(2*kB*Th) * eV # unitless
 Yc = copy.copy(R_Sc)
@@ -158,6 +142,33 @@ Tupperh = 1/(2*kB*lowerh) * eV
 Tlowerc = 1/(2*kB*upperc) * eV
 Tupperc = 1/(2*kB*lowerc) * eV
 
+plt.figure(0)
+ax5 = plt.subplot(111)
+plt.errorbar(hp.nominal(Tc), hp.nominal(R_Sc/1000), xerr=hp.stddev(Tc), yerr=hp.stddev(R_Sc/1000), fmt='.b', label=r'measured data cooling')
+plt.errorbar(hp.nominal(Th), hp.nominal(R_Sh/1000), xerr=hp.stddev(Th), yerr=hp.stddev(R_Sh/1000), fmt='.g', label=r'measured data heating')
+
+# marks for the bounds
+ax5.axvline(Tlowerc, linewidth=1, color='blue')
+ax5.text(Tlowerc+5, 3, r'lower bound $T_{\downarrow} = ' + hp.fmt_number(Tlowerc, 2) + r' \, K$', rotation=90, verticalalignment='center', color='blue')
+ax5.axvline(Tupperc, linewidth=1, color='blue')
+ax5.text(Tupperc+5, 3, r'upper bound $T_{\downarrow} = ' + hp.fmt_number(Tupperc, 2) + r' \, K$', rotation=90, verticalalignment='center', color='blue')
+
+ax5.axvline(Tlowerh, linewidth=1, color='green')
+ax5.text(Tlowerh+5, 3, r'lower bound $T_{\uparrow} = ' + hp.fmt_number(Tlowerh, 2) + r' \, K$', rotation=90, verticalalignment='center', color='green')
+ax5.axvline(Tupperh, linewidth=1, color='green')
+ax5.text(Tupperh+5, 3, r'upper bound $T_{\uparrow} = ' + hp.fmt_number(Tupperh, 2) + r' \, K$', rotation=90, verticalalignment='center', color='green')
+
+plt.ylabel(r"$R \, [k\Omega]$")
+plt.xlabel(r"$T \, [K]$")
+#plt.xlim(580, 760) # intrinsic regime
+#plt.ylim(0, 0.015) # intrinsic regime
+plt.grid(True)
+plt.legend(loc="upper right")
+plt.savefig("plots/temperature_resistance.eps")
+
+
+# energy gap plot
+
 intrinsic_regime_c = eV/(2*kB*np.array([upperc, lowerc]))
 intrinsic_regime_h = eV/(2*kB*np.array([upperh, lowerh]))
 
@@ -173,6 +184,11 @@ coeffsh = hp.phpolyfit(X_polyfith, hp.pnumpy.log(Y_polyfith), 1)
 E_gh = coeffsh[0]
 A_h = hp.pnumpy.exp(-copy.copy(coeffsh[1]))
 
+#print(E_gc)
+#print(E_gh)
+E_gc.sf = 4
+E_gh.sf = 4
+
 pc = lambda x: np.polyval(copy.copy(coeffsc), x)
 xc = np.linspace(6, 16, 10)
 ph = lambda x: np.polyval(copy.copy(coeffsh), x)
@@ -184,41 +200,34 @@ slope_h, intercept_h, r_value_h, p_value_h, std_err_h = linregress(hp.nominal(X_
 def ticks(y, pos):
     return r'$e^{' + r'{:.0f}'.format(np.log(y)) + r'}$'
 
+
 plt.figure(2)
 ax3 = plt.subplot(111)
-plt.errorbar(hp.nominal(Xc), hp.nominal(Yc), xerr=hp.stddev(Xc), yerr=hp.stddev(Yc), fmt='.', label=r'measured data')
-plt.plot(hp.nominal(xc), hp.nominal(hp.pnumpy.exp(pc(xc))), '-r', label=r'regression line $p_c(x)$')
-ax3.axvline(lowerc, linewidth=2, color='black')
-ax3.text(lowerc+0.1, 1000, r'lower bound $B_{\downarrow} = ' + hp.fmt_number(lowerc, 2) + r' \, eV$', rotation=90, verticalalignment='center')
-ax3.axvline(upperc, linewidth=2, color='black')
-ax3.text(upperc+0.1, 1000, r'upper bound $B_{\uparrow} = ' + hp.fmt_number(upperc, 3) + r' \, eV$', rotation=90, verticalalignment='center')
+plt.errorbar(hp.nominal(Xc), hp.nominal(Yc), xerr=hp.stddev(Xc), yerr=hp.stddev(Yc), fmt='.b', label=r'measured data cooling')
+plt.errorbar(hp.nominal(Xh), hp.nominal(Yh), xerr=hp.stddev(Xh), yerr=hp.stddev(Yh), fmt='.g', label=r'measured data heating')
+plt.plot(hp.nominal(xc), hp.nominal(hp.pnumpy.exp(pc(xc))), '-b', label=r'cooling regression line $p_c(x)$')
+plt.plot(hp.nominal(xh), hp.nominal(hp.pnumpy.exp(ph(xh))), '-g', label=r'heating regression line $p_h(x)$')
+
+# marks for the bounds
+ax3.axvline(lowerc, linewidth=1, color='blue')
+ax3.text(lowerc+0.1, 22000, r'lower bound $B_{\downarrow} = ' + hp.fmt_number(lowerc, 2) + r' \, eV$', rotation=90, verticalalignment='center', color='blue')
+ax3.axvline(upperc, linewidth=1, color='blue')
+ax3.text(upperc+0.1, 22000, r'upper bound $B_{\uparrow} = ' + hp.fmt_number(upperc, 3) + r' \, eV$', rotation=90, verticalalignment='center', color='blue')
+ax3.axvline(lowerh, linewidth=1, color='green')
+ax3.text(lowerh+0.1, 22000, r'lower bound $B_{\downarrow} = ' + hp.fmt_number(lowerh, 2) + r' \, eV$', rotation=90, verticalalignment='center', color='green')
+ax3.axvline(upperh, linewidth=1, color='green')
+ax3.text(upperh+0.1, 22000, r'upper bound $B_{\uparrow} = ' + hp.fmt_number(upperh, 3) + r' \, eV$', rotation=90, verticalalignment='center', color='green')
+
+# format y-axis as e^y
 ax3.set_yscale("log", basey=np.e, nonposy='clip')
 ax3.yaxis.set_major_formatter(mtick.FuncFormatter(ticks))
+
 plt.xlim(6, 16)
 plt.ylabel(r"$\ln{\left( R_S \right)} \, [\Omega]$")
 plt.xlabel(r"$\left(2 k_B T \right)^{-1} \, [eV]$")
-plt.title("Band gap energy for cooling down the sample")
 plt.grid(True)
-plt.legend(loc="best")
-plt.savefig("plots/energy_gap_cooling.eps")
-
-plt.figure(3)
-ax4 = plt.subplot(111)
-plt.errorbar(hp.nominal(Xh), hp.nominal(Yh), xerr=hp.stddev(Xh), yerr=hp.stddev(Yh), fmt='.', label=r'measured data')
-plt.plot(hp.nominal(xh), hp.nominal(hp.pnumpy.exp(ph(xh))), '-r', label=r'regression line $p_h(x)$')
-ax4.axvline(lowerh, linewidth=2, color='black')
-ax4.text(lowerh+0.1, 12000, r'lower bound $B_{\downarrow} = ' + hp.fmt_number(lowerh, 2) + r' \, eV$', rotation=90, verticalalignment='center')
-ax4.axvline(upperh, linewidth=2, color='black')
-ax4.text(upperh+0.1, 12000, r'upper bound $B_{\uparrow} = ' + hp.fmt_number(upperh, 3) + r' \, eV$', rotation=90, verticalalignment='center')
-ax4.set_yscale("log", basey=np.e, nonposy='clip')
-ax4.yaxis.set_major_formatter(mtick.FuncFormatter(ticks))
-#plt.xlim(6, 16)
-plt.ylabel(r"$\ln{\left( R_S \right)} \, [\Omega]$")
-plt.xlabel(r"$\left(2 k_B T \right)^{-1} \, [eV]$")
-plt.grid(True)
-plt.title("Band gap energy for heating up the sample")
-plt.legend(loc="best")
-plt.savefig("plots/energy_gap_heating.eps")
+plt.legend(loc="lower right", fontsize="small")
+plt.savefig("plots/energy_gap.eps")
 
 # 3 steps in finding the bounds
 data_y_meas_h = [None] * 3
@@ -335,7 +344,7 @@ plt.errorbar(hp.nominal(Th_int), hp.nominal(mu_h), xerr=hp.stddev(Th_int), yerr=
 plt.plot(Ts_c, mu_fit_c(Ts_c), 'r-', label=r'theory $\propto T^{-3/2}$')
 plt.plot(Ts_h, mu_fit_h(Ts_h), 'r-')
 
-plt.xlabel(r"Temperature $T$ $[^{\circ}K]$")
+plt.xlabel(r"Temperature $T$ $[K]$")
 plt.ylabel(r"Mobility $\mu$ $[a.u.]$")
 plt.xlim(450, 900)
 plt.ylim(1.0*10**18, 2.6*10**18)
@@ -351,7 +360,7 @@ fig, ax = plt.subplots(1)
 plt.plot(1/Tc_int_linspace, hp.nominal(n_c(Tc_int_linspace)), '.', label=r'cooling (intrinsic regime)')
 plt.plot(1/Th_int_linspace, hp.nominal(n_h(Th_int_linspace)), '.', label=r'heating (intrinsic regime)')
 
-plt.xlabel(r"$1/T$ $[^{\circ}K^{-1}]$")
+plt.xlabel(r"$1/T$ $[K^{-1}]$")
 plt.ylabel(r"Carrier Concentration $n_i$ $[a.u.]$")
 ax.set_yticklabels([])
 plt.grid(True)

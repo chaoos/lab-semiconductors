@@ -626,9 +626,12 @@ Wrapper for np.polyfit to cope with the ufloat datatype
 '''
 def phpolyfit (x, y, deg, **kwargs):
 	# numpy polyfit needs float type arrays to process
+	yerr = np.array(stddev(y), dtype=float)
+	xerr = np.array(stddev(x), dtype=float)
 	x = np.array(nominal(x), dtype=float)
 	y = np.array(nominal(y), dtype=float)
-	c, cov = np.polyfit(x, y, deg, cov=True, **kwargs)
+	weights = 1/np.sqrt(yerr**2 + xerr**2)**2
+	c, cov = np.polyfit(x, y, deg, w=weights, cov=True, **kwargs)
 	
 	if True in np.isnan(np.sqrt(np.diagonal(cov))):
 		print("Something went wrong in calculating the stddev of the coeffs:")
